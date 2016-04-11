@@ -74,8 +74,11 @@ def assemble(defs, component):
     shuffle(systems)
     #
     for system in systems:
+        print "SYSTEM: %s" % system
+        print "SYSTEM PATH: %s" % system['path']
         compose(defs, system['path'])
         for subsystem in system.get('subsystems', []):
+            print "SUBSYSTEM: %s" % subsystem
             compose(defs, subsystem)
 
     install_contents(defs, component)
