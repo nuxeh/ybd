@@ -185,6 +185,7 @@ def install_contents(defs, component):
             print 'SANDBOX: %s' % component['sandbox']
             if os.path.exists(os.path.join(component['sandbox'], 'baserock',
                                            content['name'] + '.meta')):
+                print "ALREADY INSTALLED %s" % content['name']
                 # content has already been installed
                 if config.get('log-verbose'):
                     log(component, 'Already installed', content['name'])
@@ -197,6 +198,8 @@ def install_contents(defs, component):
                     if stratum['path'] == content['path']:
                         artifacts = stratum.get('artifacts')
                         break
+
+                print 'ARTIFACTS: %s' % artifacts
 
                 if artifacts:
                     compose(defs, content)
