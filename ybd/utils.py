@@ -85,7 +85,7 @@ def hardlink_all_files(srcpath, destpath):
 
     '''
     # s/print '\(.*\)'\(.*\)$/os.stderr.write('\1'\2)/
-    os.stderr.write('LINK: %s -> %s' % (srcpath, destpath))
+    sys.stderr.write('LINK: %s -> %s\n' % (srcpath, destpath))
     _process_tree(srcpath, destpath, os.link)
 
 
