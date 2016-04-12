@@ -71,9 +71,8 @@ def assemble(defs, component):
     systems = component.get('systems', [])
     print 'COMPONENT: %s' % component
     print 'SYSTEMS: %s' % repr(systems)
-    #if not a system:
-    shuffle(systems)
-    #
+    if component.get('kind', 'chunk') != 'system':
+        shuffle(systems)
     for system in systems:
         print "SYSTEM: %s" % system
         print "SYSTEM PATH: %s" % system['path']
@@ -179,7 +178,8 @@ def install_contents(defs, component):
 
     def install(defs, component, contents):
         print "CONTENTS: %s" % contents
-        shuffle(contents)
+        if component.get('kind', 'chunk') != 'system':
+            shuffle(contents)
         for it in contents:
             content = defs.get(it)
 #            print 'CONTENT: %s' % content
@@ -228,7 +228,8 @@ def install_dependencies(defs, component):
     print 'INSTALL DEPENDENCIES ==================================='
 
     def install(defs, component, dependencies):
-        shuffle(dependencies)
+        if component.get('kind', 'chunk') != 'system':
+            shuffle(dependencies)
         for it in dependencies:
             dependency = defs.get(it)
             if os.path.exists(os.path.join(component['sandbox'], 'baserock',
