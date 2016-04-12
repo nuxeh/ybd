@@ -71,17 +71,19 @@ def assemble(defs, component):
     systems = component.get('systems', [])
     print 'COMPONENT: %s' % component
     print 'SYSTEMS: %s' % repr(systems)
-    if component.get('kind', 'chunk') != 'system':
-        shuffle(systems)
-    for system in systems:
-        print "SYSTEM: %s" % system
-        print "SYSTEM PATH: %s" % system['path']
-        compose(defs, system['path'])
-        for subsystem in system.get('subsystems', []):
-            print "SUBSYSTEM: %s" % subsystem
-            compose(defs, subsystem)
+    # Only use one YBD fork to build systems
+    if component.get('kind', 'chunk') == 'system' and os.fork() == 0:
+        if component.get('kind', 'chunk') != 'system':
+            shuffle(systems)
+        for system in systems:
+            print "SYSTEM: %s" % system
+            print "SYSTEM PATH: %s" % system['path']
+            compose(defs, system['path'])
+            for subsystem in system.get('subsystems', []):
+                print "SUBSYSTEM: %s" % subsystem
+                compose(defs, subsystem)
 
-    install_contents(defs, component)
+        install_contents(defs, component)
 
 
 def build(defs, component):
