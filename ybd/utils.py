@@ -84,7 +84,8 @@ def hardlink_all_files(srcpath, destpath):
     If an exception is raised, the staging-area is indeterminate.
 
     '''
-    print 'LINK: %s -> %s' % (srcpath, destpath)
+    # s/print '\(.*\)'\(.*\)$/os.stderr.write('\1'\2)/
+    os.stderr.write('LINK: %s -> %s' % (srcpath, destpath))
     _process_tree(srcpath, destpath, os.link)
 
 
