@@ -144,6 +144,7 @@ def run_build(defs, this):
 
 
 def shuffle(contents):
+    print "SHUFFLE -------------------------------------------------------"
     if config.get('instances', 1) > 1:
         random.seed(datetime.datetime.now())
         random.shuffle(contents)
