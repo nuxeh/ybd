@@ -69,7 +69,7 @@ def compose(defs, target):
 def assemble(defs, component):
     '''Handle creation of composite components (strata, systems, clusters)'''
     systems = component.get('systems', [])
-    pint 'COMPONENT: %s' % component
+    print 'COMPONENT: %s' % component
     print 'SYSTEMS: %s' % repr(systems)
     #if not a system:
     shuffle(systems)
