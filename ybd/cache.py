@@ -128,6 +128,7 @@ def cache(defs, this):
         shutil.move('%s.tar.gz' % cachefile, cachefile)
 
     app.config['counter'].increment()
+    print 'CACHEFILE: %s' % cachefile
     unpack(defs, this, cachefile)
 
     if app.config.get('kbas-password', 'insecure') != 'insecure' and \
