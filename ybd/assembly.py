@@ -178,6 +178,7 @@ def install_contents(defs, component):
     print 'INSTALL CONTENTS ======================================='
 
     def install(defs, component, contents):
+        print "CONTENTS: %s" % contents
         shuffle(contents)
         for it in contents:
             content = defs.get(it)
