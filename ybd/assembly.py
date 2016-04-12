@@ -93,11 +93,13 @@ def build(defs, component):
     with claim(defs, component):
         if component.get('kind', 'chunk') == 'chunk':
             install_dependencies(defs, component)
-        with timer(component, 'build of %s' % component['cache']):
+        with timer(component, 'build of %s' % component['cache']): ##
             run_build(defs, component)
 
-        with timer(component, 'artifact creation'):
+        with timer(component, 'artifact creation'): ##
+            print "WRITING METADATA ---------------------------"
             splitting.write_metadata(defs, component)
+            print "CACHE --------------------------------------"
             cache(defs, component)
 
 
