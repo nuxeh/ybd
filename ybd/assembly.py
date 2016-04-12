@@ -69,6 +69,7 @@ def compose(defs, target):
 def assemble(defs, component):
     '''Handle creation of composite components (strata, systems, clusters)'''
     systems = component.get('systems', [])
+    pint 'COMPONENT: %s' % component
     print 'SYSTEMS: %s' % repr(systems)
     #if not a system:
     shuffle(systems)
@@ -174,6 +175,8 @@ def claim(defs, this):
 def install_contents(defs, component):
     '''Install recursed contents of component into component's sandbox.'''
 
+    print 'INSTALL CONTENTS ======================================='
+
     def install(defs, component, contents):
         shuffle(contents)
         for it in contents:
@@ -215,6 +218,8 @@ def install_contents(defs, component):
 
 def install_dependencies(defs, component):
     '''Install recursed dependencies of component into component's sandbox.'''
+
+    print 'INSTALL DEPENDENCIES ==================================='
 
     def install(defs, component, dependencies):
         shuffle(dependencies)
