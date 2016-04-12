@@ -120,7 +120,7 @@ def cache(defs, this):
         shutil.rmtree(this['install'])
         shutil.rmtree(this['build'])
         utils.set_mtime_recursively(this['sandbox'])
-        utils.make_deterministic_tar_archive(cachefile, this['sandbox'])
+        utils.make_deterministic_tar_archive(cachefile, this['sandbox']) #
         shutil.move('%s.tar' % cachefile, cachefile)
     else:
         utils.set_mtime_recursively(this['install'])

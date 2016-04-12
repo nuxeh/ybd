@@ -182,6 +182,7 @@ def install_contents(defs, component):
         shuffle(contents)
         for it in contents:
             content = defs.get(it)
+            print 'CONTENT: %s' % content
             print 'SANDBOX: %s' % component['sandbox']
             if os.path.exists(os.path.join(component['sandbox'], 'baserock',
                                            content['name'] + '.meta')):

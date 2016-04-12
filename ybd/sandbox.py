@@ -84,6 +84,7 @@ def install(defs, this, component):
         app.exit(this, 'ERROR: unable to get cache for', component['name'])
     unpackdir = cache.get_cache(defs, component) + '.unpacked'
     if this.get('kind') is 'system':
+        print 'UTILS:COPY_ALL_FILES'
         utils.copy_all_files(unpackdir, this['sandbox'])
     else:
         utils.hardlink_all_files(unpackdir, this['sandbox'])
