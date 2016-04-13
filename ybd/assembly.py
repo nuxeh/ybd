@@ -163,6 +163,7 @@ def claim(defs, this):
     with open(lockfile(defs, this), 'a') as l:
         try:
             fcntl.flock(l, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            print 'FORK %d CLAIMED: %s' % (get_fork(), this)
         except Exception as e:
             if e.errno in (errno.EACCES, errno.EAGAIN):
                 # flock() will report EACCESS or EAGAIN when the lock fails.
@@ -172,7 +173,6 @@ def claim(defs, this):
                 traceback.print_exc()
                 exit(this, 'ERROR: a surprise exception happened', '')
         try:            
-            print 'FORK %d CLAIMED: %s' % (get_fork(), this)
             yield
         finally:
             if os.path.isfile(lockfile(defs, this)):
