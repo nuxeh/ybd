@@ -155,6 +155,7 @@ def shuffle(contents):
 
 @contextlib.contextmanager
 def claim(defs, this):
+    print 'CLAIM: %s' % this
     with open(lockfile(defs, this), 'a') as l:
         try:
             fcntl.flock(l, fcntl.LOCK_EX | fcntl.LOCK_NB)
