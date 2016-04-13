@@ -160,7 +160,6 @@ def shuffle(contents):
 
 @contextlib.contextmanager
 def claim(defs, this):
-    print 'CLAIM: %s' % this
     with open(lockfile(defs, this), 'a') as l:
         try:
             fcntl.flock(l, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -172,12 +171,16 @@ def claim(defs, this):
                 import traceback
                 traceback.print_exc()
                 exit(this, 'ERROR: a surprise exception happened', '')
-        try:
+        try:            
+            print 'FORK %d CLAIMED: %s' % (get_fork(), this)
             yield
         finally:
             if os.path.isfile(lockfile(defs, this)):
                 os.remove(lockfile(defs, this))
 
+def get_fork():
+    fork = config.get('fork')
+    return 0 if fork == None else fork
 
 def install_contents(defs, component):
     '''Install recursed contents of component into component's sandbox.'''
