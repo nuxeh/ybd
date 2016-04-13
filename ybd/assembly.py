@@ -22,6 +22,7 @@ import fcntl
 import errno
 
 import json
+import app
 from app import config, chdir, exit, timer, elapsed
 from app import log, log_riemann, lockfile, RetryException
 from cache import cache, cache_key, get_cache, get_remote
@@ -69,7 +70,17 @@ def compose(defs, target):
 def assemble(defs, component):
     '''Handle creation of composite components (strata, systems, clusters)'''
     systems = component.get('systems', [])
-    shuffle(systems)
+    if component.get('kind', 'chunk') == 'system' and app.get_fork() != 0:
+        # To try to ensure reproducibility when building system images,
+        # only use a single YBD fork to build systems - to avoid racing,
+        # and maintain the order in which dependencies are insalled into
+        # the system's installation directory before being assembled
+        # into a system artifact tarball
+        log(component,
+            'SKIPPING BUILD: Using single process to build system image')
+        return
+    if component.get('kind', 'chunk') != 'system':
+        shuffle(systems)
     for system in systems:
         compose(defs, system['path'])
         for subsystem in system.get('subsystems', []):
@@ -165,7 +176,8 @@ def install_contents(defs, component):
     '''Install recursed contents of component into component's sandbox.'''
 
     def install(defs, component, contents):
-        shuffle(contents)
+        if component.get('kind', 'chunk') != 'system':
+            shuffle(contents)
         for it in contents:
             content = defs.get(it)
             if os.path.exists(os.path.join(component['sandbox'], 'baserock',
@@ -207,7 +219,8 @@ def install_dependencies(defs, component):
     '''Install recursed dependencies of component into component's sandbox.'''
 
     def install(defs, component, dependencies):
-        shuffle(dependencies)
+        if component.get('kind', 'chunk') != 'system':
+            shuffle(dependencies)
         for it in dependencies:
             dependency = defs.get(it)
             if os.path.exists(os.path.join(component['sandbox'], 'baserock',
