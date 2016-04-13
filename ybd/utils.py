@@ -23,6 +23,7 @@ import stat
 from fs.osfs import OSFS
 from fs.multifs import MultiFS
 import calendar
+import sys
 
 import app
 
@@ -83,6 +84,8 @@ def hardlink_all_files(srcpath, destpath):
     If an exception is raised, the staging-area is indeterminate.
 
     '''
+    # s/print '\(.*\)'\(.*\)$/os.stderr.write('\1'\2)/
+    sys.stderr.write('LINK: %s -> %s\n' % (srcpath, destpath))
     _process_tree(srcpath, destpath, os.link)
 
 
