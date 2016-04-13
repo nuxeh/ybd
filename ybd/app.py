@@ -52,7 +52,9 @@ class RetryException(Exception):
                     call(['flock', '--shared', '--timeout',
                           config.get('timeout', '60'), str(l.fileno())])
                 if config['log-verbose']:
-                    log(component, 'Finished wait loop')
+                    fork = config.get('fork')
+                    log(component, 'Fork %d finished wait loop' %
+                                    0 if fork == None else fork)
         config['last-retry-time'] = datetime.datetime.now()
         config['last-retry-component'] = component
         for dirname in config['sandboxes']:
