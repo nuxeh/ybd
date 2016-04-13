@@ -69,10 +69,14 @@ def compose(defs, target):
 def assemble(defs, component):
     '''Handle creation of composite components (strata, systems, clusters)'''
     systems = component.get('systems', [])
+    print '---------------------- ASSEMBLE ------------------------'
     print 'COMPONENT: %s' % component
     print 'SYSTEMS: %s' % repr(systems)
+    print 'KIND [chunk]: %s' % component.get('kind', 'chunk')
+    print 'FORK: %d' % config.get('fork')
+    print '---------------------- ASSEMBLE ------------------------'
     # Only use one YBD fork to build systems
-    if component.get('kind', 'chunk') == 'system' and os.fork() == 0:
+    if component.get('kind', 'chunk') == 'system' and config.get('fork') == 0:
         if component.get('kind', 'chunk') != 'system':
             shuffle(systems)
         for system in systems:
