@@ -73,7 +73,8 @@ def assemble(defs, component):
     print 'COMPONENT: %s' % component
     print 'SYSTEMS: %s' % repr(systems)
     print 'KIND [chunk]: %s' % component.get('kind', 'chunk')
-    print 'FORK: %d' % config.get('fork')
+    fork = config.get('fork')
+    print 'FORK: %d' % 0 if fork == None else fork
     print '---------------------- ASSEMBLE ------------------------'
     # Only use one YBD fork to build systems
     if component.get('kind', 'chunk') == 'system' and config.get('fork') == 0:
