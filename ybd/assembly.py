@@ -79,8 +79,7 @@ def assemble(defs, component):
         log(component,
             'SKIPPING BUILD: Using single process to build system image')
         return
-    if component.get('kind', 'chunk') != 'system':
-        shuffle(systems)
+    shuffle(systems)
     for system in systems:
         compose(defs, system['path'])
         for subsystem in system.get('subsystems', []):
