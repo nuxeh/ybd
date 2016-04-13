@@ -70,19 +70,21 @@ def compose(defs, target):
 def assemble(defs, component):
     '''Handle creation of composite components (strata, systems, clusters)'''
     systems = component.get('systems', [])
-    if component.get('kind', 'chunk') == 'system' and app.get_fork() != 0:
+    #if component.get('kind', 'chunk') == 'system' and app.get_fork() != 0:
         # To try to ensure reproducibility when building system images,
         # only use a single YBD fork to build systems - to avoid racing,
         # and maintain the order in which dependencies are insalled into
         # the system's installation directory before being assembled
         # into a system artifact tarball
-        log(component,
-            'SKIPPING BUILD: Using single process to build system image')
-        return
+    #    log(component,
+    #        'SKIPPING BUILD: Using single process to build system image')
+    #    return
     shuffle(systems)
     for system in systems:
+        print 'SYSTEM: %s ' % system
         compose(defs, system['path'])
         for subsystem in system.get('subsystems', []):
+            print 'SUBSYSTEM: %s' % subsystem
             compose(defs, subsystem)
 
     install_contents(defs, component)
