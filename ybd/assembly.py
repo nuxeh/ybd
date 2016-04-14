@@ -78,10 +78,6 @@ def assemble(defs, component):
             print 'SUBSYSTEM: %s' % subsystem
             compose(defs, subsystem)
 
-    if component.get('kind', 'chunk') == 'system' and app.get_fork() != 0:
-        # Skip installing contents and drop back to a single process for
-        # system artifact creation
-        return
     install_contents(defs, component)
 
 
