@@ -78,6 +78,8 @@ def assemble(defs, component):
             print 'SUBSYSTEM: %s' % subsystem
             compose(defs, subsystem)
 
+    # FIXME: Find a way to skip this when using a
+    # single process to build system artifacts
     install_contents(defs, component)
 
 
