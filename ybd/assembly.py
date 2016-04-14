@@ -91,7 +91,7 @@ def build(defs, component):
         # the system's installation directory before being assembled
         # into a system artifact tarball
         log(component,
-            'SKIPPING BUILD: Using single process to build system image')
+            'Skipping build: Using single process to build system image')
         return
 
     if get_cache(defs, component):
