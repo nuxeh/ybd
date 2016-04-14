@@ -68,6 +68,7 @@ def compose(defs, target):
 
 
 def assemble(defs, component):
+    systems = component.get('systems', [])
     print '---------------------- ASSEMBLE ------------------------'
     print 'COMPONENT: %s' % component
     print 'SYSTEMS: %s' % repr(systems)
@@ -76,7 +77,6 @@ def assemble(defs, component):
     print 'FORK: %d' % 0 if fork == None else fork
     print '---------------------- ASSEMBLE ------------------------'
     '''Handle creation of composite components (strata, systems, clusters)'''
-    systems = component.get('systems', [])
     shuffle(systems)
     for system in systems:
         print 'SYSTEM: %s ' % system
