@@ -72,6 +72,7 @@ def copy_all_files(srcpath, destpath):
     def _copyfun(inpath, outpath):
         with open(inpath, "r") as infh:
             with open(outpath, "w") as outfh:
+                print 'COPY: %s -> %s' % (infh, outfh)
                 shutil.copyfileobj(infh, outfh, 1024*1024*4)
         shutil.copystat(inpath, outpath)
 
@@ -247,6 +248,8 @@ def make_deterministic_gztar_archive(base_name, root_dir, time=1321009871.0):
     # shutil.make_archive() because of the way the tarfile module includes the
     # filename of the tarfile in the gzip header. So we have to reimplement
     # shutil.make_archive().
+
+    print 'MAKE DETERMINISTIC GZTAR ARCHIVE ======================='
 
     def add_directory_to_tarfile(f_tar, dir_name, dir_arcname):
         for filename in sorted(os.listdir(dir_name)):

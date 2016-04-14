@@ -27,6 +27,14 @@ from fs.osfs import OSFS
 
 
 def install_stratum_artifacts(defs, component, stratum, artifacts):
+
+    print '-------------- INSTALL_STRATUM_ARTIFACTS -----------------'
+    print 'defs: %s' % defs
+    print 'component: %s' % component
+    print 'stratum: %s' % stratum
+    print 'aritfacts: %s' % artifacts
+    print '-------------- INSTALL_STRATUM_ARTIFACTS -----------------'
+
     '''Create the .meta files for a split stratum
 
     Given a stratum and a list of artifacts to split, writes new .meta files to
@@ -120,7 +128,7 @@ def write_metadata(defs, component):
         write_chunk_metafile(defs, component)
     elif kind == 'stratum':
         write_stratum_metafiles(defs, component)
-    check_overlaps(defs, component)
+    check_overlaps(defs, component) ##
 
 
 def compile_rules(defs, component):

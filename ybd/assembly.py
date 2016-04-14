@@ -68,6 +68,13 @@ def compose(defs, target):
 
 
 def assemble(defs, component):
+    print '---------------------- ASSEMBLE ------------------------'
+    print 'COMPONENT: %s' % component
+    print 'SYSTEMS: %s' % repr(systems)
+    print 'KIND [chunk]: %s' % component.get('kind', 'chunk')
+    fork = config.get('fork')
+    print 'FORK: %d' % 0 if fork == None else fork
+    print '---------------------- ASSEMBLE ------------------------'
     '''Handle creation of composite components (strata, systems, clusters)'''
     systems = component.get('systems', [])
     shuffle(systems)
@@ -102,11 +109,13 @@ def build(defs, component):
     with claim(defs, component):
         if component.get('kind', 'chunk') == 'chunk':
             install_dependencies(defs, component)
-        with timer(component, 'build of %s' % component['cache']):
+        with timer(component, 'build of %s' % component['cache']): ##
             run_build(defs, component)
 
-        with timer(component, 'artifact creation'):
+        with timer(component, 'artifact creation'): ##
+            print "WRITING METADATA ---------------------------"
             splitting.write_metadata(defs, component)
+            print "CACHE --------------------------------------"
             cache(defs, component)
 
 
@@ -151,7 +160,9 @@ def run_build(defs, this):
 
 
 def shuffle(contents):
+    print "SHUFFLE -------------------------------------------------------"
     if config.get('instances', 1) > 1:
+        print "ACTUALLY SHUFFLING"
         random.seed(datetime.datetime.now())
         random.shuffle(contents)
 
@@ -179,12 +190,18 @@ def claim(defs, this):
 def install_contents(defs, component):
     '''Install recursed contents of component into component's sandbox.'''
 
+    print 'INSTALL CONTENTS ======================================='
+
     def install(defs, component, contents):
         shuffle(contents)
+        print "CONTENTS: %s" % contents
         for it in contents:
             content = defs.get(it)
+#            print 'CONTENT: %s' % content
+            print 'SANDBOX: %s' % component['sandbox']
             if os.path.exists(os.path.join(component['sandbox'], 'baserock',
                                            content['name'] + '.meta')):
+                print "ALREADY INSTALLED %s" % content['name']
                 # content has already been installed
                 if config.get('log-verbose'):
                     log(component, 'Already installed', content['name'])
@@ -197,6 +214,8 @@ def install_contents(defs, component):
                     if stratum['path'] == content['path']:
                         artifacts = stratum.get('artifacts')
                         break
+
+                print 'ARTIFACTS: %s' % artifacts
 
                 if artifacts:
                     compose(defs, content)
@@ -220,6 +239,8 @@ def install_contents(defs, component):
 
 def install_dependencies(defs, component):
     '''Install recursed dependencies of component into component's sandbox.'''
+
+    print 'INSTALL DEPENDENCIES ==================================='
 
     def install(defs, component, dependencies):
         shuffle(dependencies)
