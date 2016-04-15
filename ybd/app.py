@@ -48,7 +48,7 @@ class RetryException(Exception):
         if config.get('last-retry-time'):
             wait = datetime.datetime.now() - config.get('last-retry-time')
             if wait.seconds < 1:
-                with open(lockfile(defs, component), 'r') as l:
+                with open(lockfile(defs, component), 'a') as l:
                     call(['flock', '--shared', '--timeout',
                           config.get('timeout', '60'), str(l.fileno())])
                 if config['log-verbose']:
