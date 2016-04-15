@@ -39,6 +39,13 @@ def compose(defs, target):
 
     component = defs.get(target)
 
+    # Tree analysis
+    component_name = component['name']
+    compose_depth += 1
+    compose_tree += str(component_name)
+
+    status('%s%s' % ('    ' * compose_depth, component_name))
+
     # if we can't calculate cache key, we can't create this component
     if cache_key(defs, component) is False:
         return False

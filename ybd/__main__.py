@@ -75,6 +75,8 @@ with app.timer('TOTAL'):
 
     while True:
         try:
+            compose_depth = 0
+            compose_tree = []
             compose(defs, target)
             break
         except KeyboardInterrupt:
