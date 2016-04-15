@@ -22,6 +22,7 @@ import fcntl
 import errno
 
 import json
+import app
 from app import config, chdir, exit, timer, elapsed
 from app import log, log_riemann, lockfile, RetryException
 from cache import cache, cache_key, get_cache, get_remote
@@ -75,11 +76,23 @@ def assemble(defs, component):
         for subsystem in system.get('subsystems', []):
             compose(defs, subsystem)
 
+    # FIXME: Find a way to skip this when using a
+    # single process to build system artifacts
     install_contents(defs, component)
 
 
 def build(defs, component):
     '''Create an artifact for a single component and add it to the cache'''
+
+    if component.get('kind', 'chunk') == 'system' and app.get_fork() != 0:
+        # To try to ensure reproducibility when building system images,
+        # only use a single YBD fork to build systems - to avoid racing,
+        # and maintain the order in which dependencies are insalled into
+        # the system's installation directory before being assembled
+        # into a system artifact tarball
+        log(component,
+            'Skipping build: Using single process to build system image')
+        return
 
     if get_cache(defs, component):
         return

@@ -300,3 +300,9 @@ def spawn():
             config['fork'] = fork
             log('FORKS', 'I am fork', config.get('fork'))
             break
+
+
+def get_fork():
+    '''Get the number of the fork for the current process'''
+    fork = config.get('fork')
+    return 0 if fork == None else fork
