@@ -53,6 +53,9 @@ while true; do
 	echo "Building $SYSTEM, log at \`tail -f $(pwd)/build-$COUNT\`"
 	../ybd/ybd.py $1 $2 | tee "build-$COUNT" 2>&1 > /dev/null
 
+	echo "Overlaps"
+	awk '/WARNING: overlapping path/ {print $NF}' build-$COUNT
+
 	# Status
 	if md5sum -c original-md5sums > md5-result; then
 		echo "Run $COUNT succeeded"
