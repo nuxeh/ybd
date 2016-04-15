@@ -21,6 +21,7 @@ import os
 import sys
 import fcntl
 import app
+import assembly
 from assembly import compose
 from deployment import deploy
 from definitions import Definitions
@@ -28,6 +29,8 @@ import cache
 import sandbox
 import sandboxlib
 
+compose_depth = 0
+compose_tree = []
 
 print('')
 if not os.path.exists('./VERSION'):
@@ -75,8 +78,7 @@ with app.timer('TOTAL'):
 
     while True:
         try:
-            compose_depth = 0
-            compose_tree = []
+            assembly.reset_tree()
             compose(defs, target)
             break
         except KeyboardInterrupt:

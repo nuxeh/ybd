@@ -33,6 +33,14 @@ import time
 import datetime
 import splitting
 
+compose_depth = 0
+compose_tree = []
+
+def reset_tree():
+    global compose_depth
+    global compose_tree
+    compose_depth = 0
+    compose_tree = []
 
 def compose(defs, target):
     '''Work through defs tree, building and assembling until target exists'''
@@ -41,10 +49,12 @@ def compose(defs, target):
 
     # Tree analysis
     component_name = component['name']
+    global compose_depth
+    global compose_tree
     compose_depth += 1
     compose_tree += str(component_name)
 
-    status('%s%s' % ('    ' * compose_depth, component_name))
+    log('TREE', '%s%s' % ('    ' * compose_depth, component_name))
 
     # if we can't calculate cache key, we can't create this component
     if cache_key(defs, component) is False:
