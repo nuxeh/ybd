@@ -4,7 +4,7 @@
 # Run from definitions root
 # Usage: sudo check-repeatability <system name> <architecture> [run count]
 
-OF="build-results-$(date | sed 's/\s/_/g')" # Output file for results
+OF="build-results-$(date | sed 's/\s/_/g;s/:/_/g')" # Output file for results
 echo "Results piped to $(pwd)/$OF"
 THOROUGH=1
 
@@ -64,6 +64,7 @@ if [ $THOROUGH -eq 1 ]; then
 	# Checksum all files
 	echo "Generating checksums for all regular files..."
 	find "$SYS_UNPACKED" -type f -exec md5sum "{}" + > original-md5sums-all-reg-files #2> /dev/null
+	echo "Evaluated $(wc -l original-md5sums-all-reg-files) files."
 	# Validate hard links
 fi
 
@@ -86,14 +87,14 @@ while true; do
 	# Test
 	PASS=1
 
+	if ! md5sum -c original-md5sums 2>&1 > md5-result; then
+		PASS=0
+	fi
+
 	if [ $THOROUGH -eq 1 ]; then
 		if ! md5sum -c original-md5sums-all-reg-files 2>&1 > md5-result-all; then
 			PASS=0
 		fi
-	fi
-
-	if ! md5sum -c original-md5sums 2>&1 > md5-result; then
-		PASS=0
 	fi
 
 	# Status
@@ -103,9 +104,11 @@ while true; do
 		echo "Result:"
 		echo "Overlapping files:"
 		cat md5-result | egrep 'FAILED|WARNING:'
+		echo "$(cat md5-result | egrep 'FAILED' | wc -l ) files failed checksum"
 		if [ $THOROUGH -eq 1 ]; then
 			echo 'All files:'
 			cat md5-result-all | egrep 'FAILED|WARNING:'
+			echo "$(cat md5-result-all | egrep 'FAILED' | wc -l ) files failed checksum"
 		fi
 		) | tee -a $OF
 	else
