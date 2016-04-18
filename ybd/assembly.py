@@ -178,7 +178,11 @@ def install_contents(defs, component):
     '''Install recursed contents of component into component's sandbox.'''
 
     def install(defs, component, contents):
-        shuffle(contents)
+        if component.get('kind', 'chunk') != 'system':
+            log('Install contents', 'Shuffling')
+            shuffle(contents)
+        else:
+            log('Install contents', 'Not shuffling')
         for it in contents:
             content = defs.get(it)
             if os.path.exists(os.path.join(component['sandbox'], 'baserock',
@@ -220,7 +224,11 @@ def install_dependencies(defs, component):
     '''Install recursed dependencies of component into component's sandbox.'''
 
     def install(defs, component, dependencies):
+#        if component.get('kind', 'chunk') != 'system':
+#            log('Install dependencies', 'Shuffling')
         shuffle(dependencies)
+#        else:
+#            log('Install dependencies', 'Not shuffling')
         for it in dependencies:
             dependency = defs.get(it)
             if os.path.exists(os.path.join(component['sandbox'], 'baserock',
