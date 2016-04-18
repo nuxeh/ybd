@@ -64,9 +64,9 @@ echo -n > original-md5sums-all-reg-files
 if [ $THOROUGH -eq 1 ]; then
 	# Checksum all files
 	echo "Generating checksums for all regular files..."
+	# Not ldconfig cache
 	find "$SYS_UNPACKED" -type f -exec md5sum "{}" + > original-md5sums-all-reg-files #2> /dev/null
 	echo "Evaluated $(wc -l original-md5sums-all-reg-files | awk '{print $1}') files."
-	# Validate hard links
 fi
 
 echo -n > original-links
@@ -111,14 +111,11 @@ while true; do
 		# Check symbolic link destination paths
 		echo -n > link-result
 		while read entry; do
-			FILE=$(printf "$entry" | awk '{print $1}' | sed 's/\(.*\):/\1/')
-			RESULT=$(file $FILE)
-			echo $entry
-			echo $RESULT
-			if [ "$RESULT" != "$entry" ]; then
-				ORIG=$(printf $entry | awk '{print $NF}')
-				NEW=$(printf $RESULT | awk '{print $NF}')
-				SHORTFILE=$(printf $RESULT | sed 's/$SYS_UNPACKED//')
+			FILE=$(echo "$entry" | awk '{print $1}' | sed 's/\(.*\):/\1/')
+			NEW=$(file $FILE | awk '{print $NF}')
+			ORIG=$(echo $entry | awk '{print $NF}')
+			if [ "$ORIG" != "$NEW" ]; then
+				SHORTFILE=$(echo $FILE | sed 's/$SYS_UNPACKED//')
 				echo "FAILED: $SHORTFILE: orig: $ORIG new: $NEW" >> link-result
 				PASS=0
 			fi
@@ -141,7 +138,7 @@ while true; do
 		if [ $LINKS -eq 1 ]; then
 			echo "Symbolic links:"
 			cat link-result
-			echo "$(cat md5-result-all | wc -l ) link destinations differ"
+			echo "$(cat link-result | wc -l ) link destinations differ"
 		fi
 		) | tee -a $OF
 	else
