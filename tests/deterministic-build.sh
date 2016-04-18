@@ -4,15 +4,16 @@
 # Run from definitions root
 # Usage: sudo check-repeatability <system name> <architecture> [run count]
 
-OF="build-results-$(date | sed 's/\s/_/g;s/:/_/g')" # Output file for results
+OF="build-results-$(date | sed 's/\s/-/g;s/:/-/g')" # Output file for results
 echo "Results piped to $(pwd)/$OF"
 THOROUGH=1
+LINKS=1
 
 function report() {
 	(
 	echo 'Generating report...'
-	SC=$(grep 'Run.*failed' "$OF" | wc -l)
-	FC=$(grep 'Run.*succeeded' "$OF" | wc -l)
+	FC=$(grep 'Run.*failed' "$OF" | wc -l)
+	SC=$(grep 'Run.*succeeded' "$OF" | wc -l)
 	echo "$FC tests failed"	
 	echo "$SC tests succeeded"
 	if which bc > /dev/null; then echo $(echo "scale=2; $SC*100/$FC" | bc) percent passed.; fi
@@ -64,8 +65,15 @@ if [ $THOROUGH -eq 1 ]; then
 	# Checksum all files
 	echo "Generating checksums for all regular files..."
 	find "$SYS_UNPACKED" -type f -exec md5sum "{}" + > original-md5sums-all-reg-files #2> /dev/null
-	echo "Evaluated $(wc -l original-md5sums-all-reg-files) files."
+	echo "Evaluated $(wc -l original-md5sums-all-reg-files | awk '{print $1}') files."
 	# Validate hard links
+fi
+
+echo -n > original-links
+if [ $LINKS -eq 1 ]; then
+	echo "Finding symbolic links..."
+	find "$SYS_UNPACKED" -exec file "{}" + | grep 'symbolic link to' > original-links
+	echo "Evaluated $(wc -l original-links | awk '{print $1}') symbolic links"
 fi
 
 # Run tests:
@@ -87,14 +95,34 @@ while true; do
 	# Test
 	PASS=1
 
-	if ! md5sum -c original-md5sums 2>&1 > md5-result; then
+	if ! md5sum -c original-md5sums &> md5-result; then
+		# Check overlapping files
 		PASS=0
 	fi
 
 	if [ $THOROUGH -eq 1 ]; then
-		if ! md5sum -c original-md5sums-all-reg-files 2>&1 > md5-result-all; then
+		# Check all files
+		if ! md5sum -c original-md5sums-all-reg-files &> md5-result-all; then
 			PASS=0
 		fi
+	fi
+
+	if [ $LINKS -eq 1 ]; then
+		# Check symbolic link destination paths
+		echo -n > link-result
+		while read entry; do
+			FILE=$(printf "$entry" | awk '{print $1}' | sed 's/\(.*\):/\1/')
+			RESULT=$(file $FILE)
+			echo $entry
+			echo $RESULT
+			if [ "$RESULT" != "$entry" ]; then
+				ORIG=$(printf $entry | awk '{print $NF}')
+				NEW=$(printf $RESULT | awk '{print $NF}')
+				SHORTFILE=$(printf $RESULT | sed 's/$SYS_UNPACKED//')
+				echo "FAILED: $SHORTFILE: orig: $ORIG new: $NEW" >> link-result
+				PASS=0
+			fi
+		done < original-links
 	fi
 
 	# Status
@@ -109,6 +137,11 @@ while true; do
 			echo 'All files:'
 			cat md5-result-all | egrep 'FAILED|WARNING:'
 			echo "$(cat md5-result-all | egrep 'FAILED' | wc -l ) files failed checksum"
+		fi
+		if [ $LINKS -eq 1 ]; then
+			echo "Symbolic links:"
+			cat link-result
+			echo "$(cat md5-result-all | wc -l ) link destinations differ"
 		fi
 		) | tee -a $OF
 	else
