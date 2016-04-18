@@ -10,8 +10,7 @@ function help() {
 	echo
 	echo 'Usage:'
 	echo '    check-repeat-build.sh [-c count] [-t disable thorough checking]'
-	echo '                          [-l disable link checking] [-r rebuild each time]'
-	echo '                          [-y ybd path] [-c clean up]'
+	echo '                          [-l disable link checking] [-y ybd path]'
 	echo '                          system-morph-path architecture'
 	echo
 	echo 'Example (run from root of definitions):'
@@ -76,68 +75,63 @@ function report() {
 
 trap report EXIT
 
-function build() {
-	# Build a system and gather information about it
-	echo "Building $SYSTEM, log at \`tail -f $(pwd)/original-build\`"
+# Build a system and gather information about it
+echo "Building $SYSTEM, log at \`tail -f $(pwd)/original-build\`"
 
-	$YBD $SYSTEM $ARCH | tee original-build 2>&1 > /dev/null
+$YBD $SYSTEM $ARCH | tee original-build 2>&1 > /dev/null
 
-	# 16-04-15 00:00:00 [SETUP] /src/cache/artifacts is directory for artifacts
-	# 16-04-15 00:00:08 [0/28/125] [base-system-x86_64-generic] WARNING: overlapping path /sbin/halt
-	# 16-04-15 00:00:38 [1/28/125] [base-system-x86_64-generic] Cached 1504286720 bytes d0783c3f0bb26c630f85c33fac06766f as base-system-x86_64-generic.e94e0734c094baced9f5af1909b56e5b86dc4ff4700827b2762007edfd6223eb
+# 16-04-15 00:00:00 [SETUP] /src/cache/artifacts is directory for artifacts
+# 16-04-15 00:00:08 [0/28/125] [base-system-x86_64-generic] WARNING: overlapping path /sbin/halt
+# 16-04-15 00:00:38 [1/28/125] [base-system-x86_64-generic] Cached 1504286720 bytes d0783c3f0bb26c630f85c33fac06766f as base-system-x86_64-generic.e94e0734c094baced9f5af1909b56e5b86dc4ff4700827b2762007edfd6223eb
 
-	ARTIFACT_DIR=$(sed 's/^[[:digit:]]*//' original-build | awk '/is directory for artifacts/ {print $4}')
-	SYS_ARTIFACT=$(awk "/.*Cached.*$SYS_NAME.*/ {print \$NF}" original-build)
+ARTIFACT_DIR=$(sed 's/^[[:digit:]]*//' original-build | awk '/is directory for artifacts/ {print $4}')
+SYS_ARTIFACT=$(awk "/.*Cached.*$SYS_NAME.*/ {print \$NF}" original-build)
 
-	if [ "$SYS_ARTIFACT" == "" ]; then
-		echo "No system artifact found. You may need to clear the YBD cache directory to rebuild."
-		exit 1
-	fi
+if [ "$SYS_ARTIFACT" == "" ]; then
+	echo "No system artifact found. You may need to clear the YBD cache directory to rebuild."
+	exit 1
+fi
 
-	OVERLAPS=$(awk '/WARNING: overlapping path/ {print $NF}' original-build)
+OVERLAPS=$(awk '/WARNING: overlapping path/ {print $NF}' original-build)
 
-	SYS_ARTIFACT_PATH="$ARTIFACT_DIR/$SYS_ARTIFACT"
-	SYS_UNPACKED="$SYS_ARTIFACT_PATH/$SYS_ARTIFACT.unpacked"
+SYS_ARTIFACT_PATH="$ARTIFACT_DIR/$SYS_ARTIFACT"
+SYS_UNPACKED="$SYS_ARTIFACT_PATH/$SYS_ARTIFACT.unpacked"
 
-	# Collect data from original system for comparison
-	echo "Overlapping files:"
-	echo -n > original-md5sums
-	for o in $OVERLAPS; do
-		echo "$o"
-		FILE=$(file "$SYS_UNPACKED$o" | awk '/symbolic link/ {print $NF}')
-		if [ "$FILE" == ""  ]; then
-			md5sum "$SYS_UNPACKED/$o" >> original-md5sums
-		else
-			echo "Following symbolic link $o -> $FILE"
-			if ! md5sum "$SYS_UNPACKED/$FILE" >> original-md5sums 2> /dev/null; then
-				# Relative symlink path
-				LINKPATH=$(echo "$o" | sed 's@\(^.*\)/.*@\1@')
-				md5sum "$SYS_UNPACKED/$LINKPATH/$FILE" >> original-md5sums
-			fi
+# Collect data from original system for comparison
+echo "Overlapping files:"
+echo -n > original-md5sums
+for o in $OVERLAPS; do
+	echo "$o"
+	FILE=$(file "$SYS_UNPACKED$o" | awk '/symbolic link/ {print $NF}')
+	if [ "$FILE" == ""  ]; then
+		md5sum "$SYS_UNPACKED/$o" >> original-md5sums
+	else
+		echo "Following symbolic link $o -> $FILE"
+		if ! md5sum "$SYS_UNPACKED/$FILE" >> original-md5sums 2> /dev/null; then
+			# Relative symlink path
+			LINKPATH=$(echo "$o" | sed 's@\(^.*\)/.*@\1@')
+			md5sum "$SYS_UNPACKED/$LINKPATH/$FILE" >> original-md5sums
 		fi
-	done
-
-	echo -n > original-md5sums-all-reg-files
-	if [ $THOROUGH -eq 1 ]; then
-		# Checksum all files
-		echo "Generating checksums for all regular files..."
-		# Exclude ldconfig cache, regenerated each time by ldconfig
-		find "$SYS_UNPACKED" -type f \
-			-not -regex '.*/var/cache/ldconfig/aux-cache' \
-			-exec md5sum "{}" + > original-md5sums-all-reg-files
-		echo "Evaluated $(wc -l original-md5sums-all-reg-files | awk '{print $1}') files."
 	fi
+done
 
-	echo -n > original-links
-	if [ $LINKS -eq 1 ]; then
-		echo "Finding symbolic links..."
-		find "$SYS_UNPACKED" -exec file "{}" + | grep 'symbolic link to' > original-links
-		echo "Evaluated $(wc -l original-links | awk '{print $1}') symbolic links"
-	fi
-}
+echo -n > original-md5sums-all-reg-files
+if [ $THOROUGH -eq 1 ]; then
+	# Checksum all files
+	echo "Generating checksums for all regular files..."
+	# Exclude ldconfig cache, regenerated each time by ldconfig
+	find "$SYS_UNPACKED" -type f \
+		-not -regex '.*/var/cache/ldconfig/aux-cache' \
+		-exec md5sum "{}" + > original-md5sums-all-reg-files
+	echo "Evaluated $(wc -l original-md5sums-all-reg-files | awk '{print $1}') files."
+fi
 
-# Build
-build | tee -a $OF
+echo -n > original-links
+if [ $LINKS -eq 1 ]; then
+	echo "Finding symbolic links..."
+	find "$SYS_UNPACKED" -exec file "{}" + | grep 'symbolic link to' > original-links
+	echo "Evaluated $(wc -l original-links | awk '{print $1}') symbolic links"
+fi
 
 # Run tests:
 STATUS=0
@@ -145,6 +139,7 @@ echo -n > $OF
 while true; do
 
 	# Delete system artifact
+	echo "Deleting system artifact: $SYS_ARTIFACT_PATH"
 	rm -rf $SYS_ARTIFACT_PATH
 
 	# Rebuild
@@ -216,8 +211,5 @@ while true; do
 
 	COUNT=$(($COUNT+1))
 	if [ $COUNT -eq $TARGET_COUNT ]; then exit $STATUS; fi
-
-	# Repeat original build
-	if [ $BUILD_EACH_TIME -eq 1 ]; then rm -rf $SYS_ARTIFACT_PATH; build | tee -a $OF; fi
 
 done
