@@ -21,13 +21,13 @@ function help() {
 
 # Options
 
+TARGET_COUNT=0
 THOROUGH=1
 LINKS=1
 BUILD_EACH_TIME=0
-CLEAN=0
 YBD='../ybd/ybd.py'
 
-while getopts ":rclt:y:n:" opt; do
+while getopts ":rlty:n:c:" opt; do
 	case $opt in
 		# run count
 		c) TARGET_COUNT=$OPTARG
@@ -41,35 +41,37 @@ while getopts ":rclt:y:n:" opt; do
 		# rebuild
 		r) BUILD_EACH_TIME=1
 		;;
-		# clean up
-		c) CLEAN=1
-		;;
 		# ybd path
 		y) YBD=$OPTARG
+		;;
+		\?) echo "Invalid option -$OPTARG"; help
 		;;
 	esac
 done
 
 shift "$((OPTIND-1))"
-
 if ! [ -n "$1" ] || ! [ -n "$2" ]; then help; fi
 
 SYSTEM=$1
 ARCH=$2
 
+COUNT=0
 OF="build-results-$(date | sed 's/\s/-/g;s/:/-/g')" # Output file for results
 echo "Results piped to $(pwd)/$OF"
 
 function report() {
 	(
-	echo 'Generating report...'
 	FC=$(grep 'Run.*failed' "$OF" | wc -l)
 	SC=$(grep 'Run.*succeeded' "$OF" | wc -l)
 	echo "$FC tests failed"
 	echo "$SC tests succeeded"
-	if which bc > /dev/null && [ $FC -gt 0 ]; then
-		echo $(echo "scale=2; $SC*100/$FC" | bc) percent passed.; fi
-	) >> $OF
+	if which bc > /dev/null && [ $COUNT -gt 0 ]; then
+		if [ $FC -eq 0 ]; then
+			echo "100 percent passed."
+		else
+			echo $(echo "scale=2; $SC*100/$FC" | bc) percent passed.; fi
+		fi
+	) | tee -a $OF
 }
 
 trap report EXIT
@@ -78,7 +80,7 @@ function build() {
 	# Build a system and gather information about it
 	echo "Building $SYSTEM, log at \`tail -f $(pwd)/original-build\`"
 
-	$YBD $1 $2 | tee original-build 2>&1 > /dev/null
+	$YBD $SYSTEM $ARCH | tee original-build 2>&1 > /dev/null
 
 	# 16-04-15 00:00:00 [SETUP] /src/cache/artifacts is directory for artifacts
 	# 16-04-15 00:00:08 [0/28/125] [base-system-x86_64-generic] WARNING: overlapping path /sbin/halt
@@ -135,10 +137,9 @@ function build() {
 }
 
 # Build
-build $1 $2
+build | tee -a $OF
 
 # Run tests:
-COUNT=0
 STATUS=0
 echo -n > $OF
 while true; do
@@ -146,13 +147,11 @@ while true; do
 	# Delete system artifact
 	rm -rf $SYS_ARTIFACT_PATH
 
-	# Repeat original build
-	if [ $BUILD_EACH_TIME -eq 1 ]; then build $1 $2; fi
-
 	# Rebuild
 	BOF="build-$COUNT"
 	echo "Run $COUNT / $TARGET_COUNT: Rebuilding $SYSTEM, log at \`tail -f $(pwd)/$BOF\`" | tee -a $OF
-	$YBD $1 $2 | tee $BOF 2>&1 > /dev/null
+
+	$YBD $SYSTEM $ARCH | tee $BOF 2>&1 > /dev/null
 
 	(echo "Overlaps:"
 	 awk '/WARNING: overlapping path/ {print $NF}' $BOF) | tee -a $OF
@@ -199,11 +198,15 @@ while true; do
 			echo 'All files:'
 			cat md5-result-all | egrep 'FAILED|WARNING:'
 			echo "$(cat md5-result-all | egrep 'FAILED' | wc -l ) files failed checksum"
+		else
+			echo 'All files test not run'
 		fi
 		if [ $LINKS -eq 1 ]; then
 			echo "Symbolic links:"
 			cat link-result
 			echo "$(cat link-result | wc -l ) link destinations differ"
+		else
+			echo 'Links test not run'
 		fi
 		) | tee -a $OF
 		STATUS=1
@@ -213,5 +216,8 @@ while true; do
 
 	COUNT=$(($COUNT+1))
 	if [ $COUNT -eq $TARGET_COUNT ]; then exit $STATUS; fi
+
+	# Repeat original build
+	if [ $BUILD_EACH_TIME -eq 1 ]; then rm -rf $SYS_ARTIFACT_PATH; build | tee -a $OF; fi
 
 done
