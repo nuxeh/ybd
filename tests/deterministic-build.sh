@@ -85,6 +85,8 @@ $YBD $SYSTEM $ARCH | tee original-build 2>&1 > /dev/null
 # 16-04-15 00:00:38 [1/28/125] [base-system-x86_64-generic] Cached 1504286720 bytes d0783c3f0bb26c630f85c33fac06766f as base-system-x86_64-generic.e94e0734c094baced9f5af1909b56e5b86dc4ff4700827b2762007edfd6223eb
 
 ARTIFACT_DIR=$(sed 's/^[[:digit:]]*//' original-build | awk '/is directory for artifacts/ {print $4}')
+SYS_NAME=$(basename "$SYSTEM" .morph)
+echo $SYS_NAME
 SYS_ARTIFACT=$(awk "/.*Cached.*$SYS_NAME.*/ {print \$NF}" original-build)
 
 if [ "$SYS_ARTIFACT" == "" ]; then
