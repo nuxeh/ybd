@@ -178,11 +178,6 @@ def install_contents(defs, component):
     '''Install recursed contents of component into component's sandbox.'''
 
     def install(defs, component, contents):
-        if component.get('kind', 'chunk') != 'system':
-            log('Install contents', 'Shuffling')
-            shuffle(contents)
-        else:
-            log('Install contents', 'Not shuffling')
         for it in contents:
             content = defs.get(it)
             if os.path.exists(os.path.join(component['sandbox'], 'baserock',
