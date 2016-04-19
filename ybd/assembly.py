@@ -33,6 +33,8 @@ import time
 import datetime
 import splitting
 
+building_system = False
+
 
 def compose(defs, target):
     '''Work through defs tree, building and assembling until target exists'''
@@ -84,6 +86,12 @@ def assemble(defs, component):
 def build(defs, component):
     '''Create an artifact for a single component and add it to the cache'''
 
+    if component.get('kind', 'chunk') == 'system':
+	# This is the first time we can be sure we are building a system,
+        # rather than recursing dependencies for it
+        global building_system
+        building_system = True
+	log('BUILDING SYSTEM', 'BUILDING SYSTEM')
 #    if component.get('kind', 'chunk') == 'system' and app.get_fork() != 0:
         # To try to ensure reproducibility when building system images,
         # only use a single YBD fork to build systems - to avoid racing,
@@ -178,11 +186,13 @@ def install_contents(defs, component):
     '''Install recursed contents of component into component's sandbox.'''
 
     def install(defs, component, contents):
-        if component.get('kind', 'chunk') != 'system':
-            log('Install contents', 'Shuffling')
+        if not building_system:
+            # Do not shuffle when assembling system images, so system images
+            # contain the same files each time, without random overwrites
+            log(component['name'], 'Shuffling')
             shuffle(contents)
         else:
-            log('Install contents', 'Not shuffling')
+            log(component['name'], 'Not shuffling')
         for it in contents:
             content = defs.get(it)
             if os.path.exists(os.path.join(component['sandbox'], 'baserock',
