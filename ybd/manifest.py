@@ -132,14 +132,15 @@ class VersionGuesser(object):
 class ManifestGenerator(object):
 
     def __init__(self):
+        self.manifest_items = dict()
         self.version_guesser = VersionGuesser()
 
-    def generate(self, artifact):
-        # Collect all meta information about the system, its strata
-        # and its chunks that we are interested in.
-        status('Extracting metadata from tarball...')
-        metadata = scriptslib.meta_load_from_tarball(artifact)
-        artifacts = []
+    def add(self, **kwargs):
+        self.manifest_items[kwargs['name']] = {
+            
+
+            }
+
 
         for metadata in metadata.get_each():
             # Try to guess the version of this artifact
@@ -150,10 +151,7 @@ class ManifestGenerator(object):
             else:
                 version = '-%s' % version
 
-            fst_col = '%s.%s.%s%s' % (metadata['cache-key'][:7],
-                                      metadata['kind'],
-                                      metadata['artifact-name'],
-                                      version)
+            fst_col = '%s.%s' % (metadata['cache-key'], version)
 
             original_ref = metadata['original_ref']
             if (metadata['kind'] in ('system', 'stratum') and
@@ -201,22 +199,3 @@ class ManifestGenerator(object):
                              artifact['repo'],
                              artifact['original_ref'],
                              artifact['sha1']))
-
-
-if __name__ == "__main__":
-    generate_manifest(sys.argv[1:])
-
-
-
-class SystemManifest:
-
-    def __init__():
-        self.artifacts = []
-        self.maxcolwidths
-
-    def add():
-
-    def dump_manifest():
-
-
-    def dump_manifest_as_file():

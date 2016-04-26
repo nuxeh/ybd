@@ -190,6 +190,8 @@ def write_stratum_metafiles(defs, stratum):
 
     '''
 
+    # HERE
+
     app.log(stratum['name'], 'splitting stratum')
     rules, splits = compile_rules(defs, stratum)
 

@@ -75,6 +75,7 @@ with app.timer('TOTAL'):
 
     while True:
         try:
+            # OR HERE
             compose(defs, target)
             break
         except KeyboardInterrupt:

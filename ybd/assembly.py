@@ -31,6 +31,9 @@ from shutil import copyfile
 import time
 import datetime
 import splitting
+import manifest
+
+system_manifest = manifest.ManifestGenerator()
 
 
 def compose(defs, target):
@@ -91,7 +94,7 @@ def build(defs, component):
             run_build(defs, component)
 
         with timer(component, 'artifact creation'):
-            splitting.write_metadata(defs, component)
+            splitting.write_metadata(defs, component, system_manifest)
             cache(defs, component)
 
 
