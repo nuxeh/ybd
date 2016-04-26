@@ -19,8 +19,9 @@ import sys
 import glob
 import os
 import re
-import contextlib
 import tempfile
+
+import app
 
 
 class ProjectVersionGuesser(object):
@@ -28,13 +29,17 @@ class ProjectVersionGuesser(object):
     def __init__(self, interesting_files):
         self.interesting_files = interesting_files
 
-    def file_contents(self, repo, ref, tree):
+    def file_contents(self, repopath):
         filenames = [x for x in self.interesting_files if x in tree]
         for filename in filenames:
-            # Retreive file from Baserock cache server
-            yield filename, scriptslib.cache_get_file(repo, ref, filename)
+            yield filename, self.repo_get_file(repopath, filename)
 
-    def file_ls(self):
+    def repo_ls(self, repopath):
+        return os.listdir()
+
+    def repo_get_file(self, repopath, filename):
+        with open(os.path.join(repopath, filename), 'r') as f:
+            return f.read()
 
 
 class AutotoolsVersionGuesser(ProjectVersionGuesser):
@@ -47,22 +52,19 @@ class AutotoolsVersionGuesser(ProjectVersionGuesser):
             'configure.in.in',
         ])
 
-    def guess_version(self, repo, ref, tree):
+    def guess_version(self, repopath):
         version = None
-        for filename, data in self.file_contents(repo, ref, tree):
+        for filename, data in self.file_contents(repopath):
             # First, try to grep for AC_INIT()
             version = self._check_ac_init(data)
             if version:
-                status('Version of %s %s detected '
-                       'via %s:AC_INIT: %s' % (repo, ref, filename, version))
+                app.log('MANIFEST', 'Version %s detected' % version)
                 break
 
             # Then, try running autoconf against the configure script
-            version = self._check_autoconf_package_version(
-                repo, ref, filename, data)
+            version = self._check_autoconf_package_version(repopath)
             if version:
-                status('Version of %s %s detected by processing '
-                       '%s: %s' % (repo, ref, filename, version))
+                app.log('MANIFEST', 'Version %s detected' % version)
                 break
         return version
 
@@ -116,15 +118,15 @@ class VersionGuesser(object):
             AutotoolsVersionGuesser()
         ]
 
-    def guess_version(self, repo, ref):
+    def guess_version(self, repopath):
         status('Guessing version of %s %s' % (repo, ref))
         version = None
         try:
             # List files on Baserock cache server
-            tree = scriptslib.cache_ls(repo, ref)
+            tree = self.ls_repo(repopath)
 
             for guesser in self.guessers:
-                version = guesser.guess_version(repo, ref, tree)
+                version = guesser.guess_version(repopath)
                 if version:
                     break
         except BaseException as err:
@@ -153,7 +155,13 @@ class ManifestGenerator(object):
         '''Try to guess the version of a named artifact'''
 
         version = self.version_guesser.guess_version(repo_path)
-        self.manifest_items['version'] = version
+
+        vstring = version if version is not None else ''
+        self.manifest_items[name]['version'] = vstring
+
+        # Update column width
+        self.colwidths['version'] = max(colwidths.get('version', 0),
+            len(vstring))
 
     def dump_to_file(self, filepath):
         '''Dump manifest to file'''
@@ -165,7 +173,7 @@ class ManifestGenerator(object):
         '''Dump manifest to string'''
 
         fmt = self._generate_output_format()
-        out = fmt % ('ARTIFACT', 'REPOSITORY', 'REF', 'COMMIT')
+        out = fmt % ('ARTIFACT', 'VERSION', 'REPOSITORY', 'REF')
 
         # Format information about system, strata and chunks.
         for type in ('system', 'stratum', 'chunk'):
@@ -178,18 +186,17 @@ class ManifestGenerator(object):
                '%%-%is\t' \
                '%%-%is\t' \
                '%%-%is' % (
-                self.colwidths['fst_col'],
+                self.colwidths['cache'],
+                self.colwidths['version'],
                 self.colwidths['repo'],
-                self.colwidths['original_ref'],
-                self.colwidths['sha1'])
+                self.colwidths['ref'])
 
     def _format_artifacts(self, fmt, kind):
         out = ''
-        fst_col = '%s-%s' % (metadata['cache-key'], version) if artifact
         for artifact in sorted(self.manifest_items, key=lambda x: x['name']):
             if artifact['kind'] == kind:
-                 out += fmt % (fst_col,
+                 out += fmt % (artifact['cache'],
+                               artifact['version'],
                                artifact['repo'],
-                               artifact['original_ref'],
-                               artifact['sha1'][:7])
+                               artifact['ref'][:7])
         return out
