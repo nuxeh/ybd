@@ -34,6 +34,8 @@ class ProjectVersionGuesser(object):
             # Retreive file from Baserock cache server
             yield filename, scriptslib.cache_get_file(repo, ref, filename)
 
+    def file_ls(self):
+
 
 class AutotoolsVersionGuesser(ProjectVersionGuesser):
 
@@ -129,73 +131,65 @@ class VersionGuesser(object):
             status('Failed to list files in %s %s' % (repo, ref))
         return version
 
+
 class ManifestGenerator(object):
 
+    headings = None
+    values = None
+
     def __init__(self):
-        self.manifest_items = dict()
         self.version_guesser = VersionGuesser()
+        self.manifest_items = dict()
+        self.colwidths = dict()
 
     def add(self, **kwargs):
-        self.manifest_items[kwargs['name']] = {
-            
+        self.manifest_items[kwargs['name']] = kwargs     
 
-            }
+        # Update column widths
+        for key, value in kwargs.iteritems():
+            colwidths[key] = max(colwidths.get(key, 0), len(value))
 
+    def get_version(self, name, repo_path):
+        '''Try to guess the version of a named artifact'''
 
-        for metadata in metadata.get_each():
-            # Try to guess the version of this artifact
-            version = self.version_guesser.guess_version(
-                      metadata['repo'], metadata['sha1'])
-            if version is None:
-                version = ''
-            else:
-                version = '-%s' % version
+        version = self.version_guesser.guess_version(repo_path)
+        self.manifest_items['version'] = version
 
-            fst_col = '%s.%s' % (metadata['cache-key'], version)
+    def dump_to_file(self, filepath):
+        '''Dump manifest to file'''
 
-            original_ref = metadata['original_ref']
-            if (metadata['kind'] in ('system', 'stratum') and
-                'baserock/builds/' in original_ref):
-                original_ref = original_ref[: len('baserock/builds/') + 7]
+        with open(filepath, 'w') as file:
+            file.write(self.dump())
 
-            artifacts.append({
-                'kind': metadata['kind'],
-                'name': metadata['artifact-name'],
-                'fst_col': fst_col,
-                'repo': metadata['repo'],
-                'original_ref': original_ref,
-                'sha1': metadata['sha1'][:7]
-            })
+    def dump(self):
+        '''Dump manifest to string'''
 
-        # Generate a format string for dumping the information.
-        fmt = self._generate_output_format(artifacts)
-        print(fmt % ('ARTIFACT', 'REPOSITORY',
-                     'REF', 'COMMIT'))
+        fmt = self._generate_output_format()
+        out = fmt % ('ARTIFACT', 'REPOSITORY', 'REF', 'COMMIT')
 
-        # Print information about system, strata and chunks.
-        self._print_artifacts(fmt, artifacts, 'system')
-        self._print_artifacts(fmt, artifacts, 'stratum')
-        self._print_artifacts(fmt, artifacts, 'chunk')
+        # Format information about system, strata and chunks.
+        for type in ('system', 'stratum', 'chunk'):
+            out += self._format_artifacts(fmt, type)
 
-    def _generate_output_format(self, artifacts):
-        colwidths = {}
-        for artifact in artifacts:
-            for key, value in artifact.iteritems():
-                colwidths[key] = max(colwidths.get(key, 0), len(value))
+        return out
 
+    def _generate_output_format(self):
         return '%%-%is\t' \
                '%%-%is\t' \
                '%%-%is\t' \
                '%%-%is' % (
-                colwidths['fst_col'],
-                colwidths['repo'],
-                colwidths['original_ref'],
-                colwidths['sha1'])
+                self.colwidths['fst_col'],
+                self.colwidths['repo'],
+                self.colwidths['original_ref'],
+                self.colwidths['sha1'])
 
-    def _print_artifacts(self, fmt, artifacts, kind):
-        for artifact in sorted(artifacts, key=lambda x: x['name']):
+    def _format_artifacts(self, fmt, kind):
+        out = ''
+        fst_col = '%s-%s' % (metadata['cache-key'], version) if artifact
+        for artifact in sorted(self.manifest_items, key=lambda x: x['name']):
             if artifact['kind'] == kind:
-                print(fmt % (artifact['fst_col'],
-                             artifact['repo'],
-                             artifact['original_ref'],
-                             artifact['sha1']))
+                 out += fmt % (fst_col,
+                               artifact['repo'],
+                               artifact['original_ref'],
+                               artifact['sha1'][:7])
+        return out
