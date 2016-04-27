@@ -30,12 +30,12 @@ class ProjectVersionGuesser(object):
         self.interesting_files = interesting_files
 
     def file_contents(self, repopath):
-        filenames = [x for x in self.interesting_files if x in tree]
+        filenames = [x for x in self.interesting_files if x in self.repo_ls]
         for filename in filenames:
             yield filename, self.repo_get_file(repopath, filename)
 
     def repo_ls(self, repopath):
-        return os.listdir()
+        return os.listdir(repopath)
 
     def repo_get_file(self, repopath, filename):
         with open(os.path.join(repopath, filename), 'r') as f:
@@ -62,7 +62,8 @@ class AutotoolsVersionGuesser(ProjectVersionGuesser):
                 break
 
             # Then, try running autoconf against the configure script
-            version = self._check_autoconf_package_version(repopath)
+            version = self._check_autoconf_package_version(repopath,
+                                                           filename,data)
             if version:
                 app.log('MANIFEST', 'Version %s detected' % version)
                 break
@@ -87,7 +88,7 @@ class AutotoolsVersionGuesser(ProjectVersionGuesser):
                         return version
         return None
 
-    def _check_autoconf_package_version(self, repo, ref, filename, data):
+    def _check_autoconf_package_version(self, repopath, filename, data):
         try:
             tempdir = tempfile.mkdtemp()
             tempfile = os.path.join(tempdir, filename)
@@ -136,9 +137,6 @@ class VersionGuesser(object):
 
 class ManifestGenerator(object):
 
-    headings = None
-    values = None
-
     def __init__(self):
         self.version_guesser = VersionGuesser()
         self.manifest_items = dict()
@@ -175,10 +173,9 @@ class ManifestGenerator(object):
         fmt = self._generate_output_format()
         out = fmt % ('ARTIFACT', 'VERSION', 'REPOSITORY', 'REF')
 
-        # Format information about system, strata and chunks.
-        for type in ('system', 'stratum', 'chunk'):
+        # Format information about strata and chunks.
+        for type in ('stratum', 'chunk'):
             out += self._format_artifacts(fmt, type)
-
         return out
 
     def _generate_output_format(self):
@@ -198,5 +195,5 @@ class ManifestGenerator(object):
                  out += fmt % (artifact['cache'],
                                artifact['version'],
                                artifact['repo'],
-                               artifact['ref'][:7])
+                               artifact.get('ref', '')[:7])
         return out

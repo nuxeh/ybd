@@ -181,7 +181,7 @@ def write_chunk_metafile(defs, chunk):
     write_metafile(rules, splits, chunk)
 
 
-def write_stratum_metafiles(defs, stratum):
+def write_stratum_metafiles(defs, stratum, manifest):
     '''Write the .meta files for a stratum to the baserock dir
 
     The split rules are used to divide up the installed components into
@@ -189,8 +189,6 @@ def write_stratum_metafiles(defs, stratum):
     contains a list of chunk artifacts which match the stratum splitting rules
 
     '''
-
-    # HERE
 
     app.log(stratum['name'], 'splitting stratum')
     rules, splits = compile_rules(defs, stratum)
@@ -201,6 +199,10 @@ def write_stratum_metafiles(defs, stratum):
             continue
 
         metadata = get_metadata(defs, chunk)
+
+        if app.config.get('manifest', True):
+            manifest.add(name=stratum['name'], kind='stratum', **metadata)
+
         split_metadata = {'cache': metadata.get('cache'),
                           'ref': metadata.get('ref'),
                           'repo': metadata.get('repo'),
@@ -239,6 +241,9 @@ def write_metafile(rules, splits, component):
                     'ref': component.get('ref'),
                     'products': [{'artifact': a, 'files': sorted(splits[a])}
                                  for a in unique_artifacts]}
+
+    if app.config.get('manifest', True):
+        manifest.add(name=component['name'], kind='chunk', **metadata)
 
     metafile = os.path.join(component['baserockdir'],
                             component['name'] + '.meta')

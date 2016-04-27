@@ -36,7 +36,7 @@ import manifest
 system_manifest = manifest.ManifestGenerator()
 
 
-def compose(defs, target):
+def compose(defs, target, manifest=None):
     '''Work through defs tree, building and assembling until target exists'''
 
     component = defs.get(target)

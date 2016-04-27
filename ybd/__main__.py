@@ -74,9 +74,13 @@ with app.timer('TOTAL'):
         app.spawn()
 
     while True:
-        try:
-            # OR HERE
-            compose(defs, target)
+        try:       
+            manifest = manifest.ManifestGenerator()
+            compose(defs, target, manifest)
+
+            if app.config.get('manifest', True):
+                manifest.dump_to_file()
+
             break
         except KeyboardInterrupt:
             app.log(target, 'Interrupted by user')
