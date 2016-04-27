@@ -64,7 +64,7 @@ def compose(defs, target, manifest=None):
 
     with sandbox.setup(component):
         assemble(defs, component)  # bring in 'contents' recursively
-        build(defs, component)     # bring in 'build-depends', and run make
+        build(defs, component, manifest) # bring in 'build-depends', run make
 
     return cache_key(defs, component)
 
@@ -81,7 +81,7 @@ def assemble(defs, component):
     install_contents(defs, component)
 
 
-def build(defs, component):
+def build(defs, component, manifest=None):
     '''Create an artifact for a single component and add it to the cache'''
 
     if get_cache(defs, component):
@@ -94,7 +94,7 @@ def build(defs, component):
             run_build(defs, component)
 
         with timer(component, 'artifact creation'):
-            splitting.write_metadata(defs, component, system_manifest)
+            splitting.write_metadata(defs, component, manifest)
             cache(defs, component)
 
 

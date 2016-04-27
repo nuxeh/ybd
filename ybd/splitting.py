@@ -118,12 +118,12 @@ def check_overlaps(defs, component):
     app.config['new-overlaps'] = []
 
 
-def write_metadata(defs, component):
+def write_metadata(defs, component, manifest=None):
     kind = component.get('kind', 'chunk')
     if kind == 'chunk':
-        write_chunk_metafile(defs, component)
+        write_chunk_metafile(defs, component, manifest)
     elif kind == 'stratum':
-        write_stratum_metafiles(defs, component)
+        write_stratum_metafiles(defs, component, manifest)
     if app.config.get('check-overlaps', 'ignore') != 'ignore':
         check_overlaps(defs, component)
 
@@ -148,7 +148,7 @@ def compile_rules(defs, component):
     return regexps, splits
 
 
-def write_chunk_metafile(defs, chunk):
+def write_chunk_metafile(defs, chunk, manifest=None):
     '''Writes a chunk .meta file to the baserock dir of the chunk
 
     The split rules are used to divide up the installed files for the chunk
@@ -181,7 +181,7 @@ def write_chunk_metafile(defs, chunk):
     write_metafile(rules, splits, chunk)
 
 
-def write_stratum_metafiles(defs, stratum, manifest):
+def write_stratum_metafiles(defs, stratum, manifest=None):
     '''Write the .meta files for a stratum to the baserock dir
 
     The split rules are used to divide up the installed components into
@@ -228,7 +228,7 @@ def write_stratum_metafiles(defs, stratum, manifest):
     write_metafile(rules, splits, stratum)
 
 
-def write_metafile(rules, splits, component):
+def write_metafile(rules, splits, component, manifest=None):
     metadata = {'cache': component.get('cache'),
                 'products': [{'artifact': a,
                               'components': sorted(set(splits[a]))}
