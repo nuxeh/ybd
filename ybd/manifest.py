@@ -21,6 +21,7 @@ import os
 import re
 import tempfile
 
+import repos
 import app
 
 
@@ -169,6 +170,9 @@ class ManifestGenerator(object):
 
     def dump(self):
         '''Dump manifest to string'''
+
+        if len(self.manifest_items) == 0:
+            return ''
 
         fmt = self._generate_output_format()
         out = fmt % ('ARTIFACT', 'VERSION', 'REPOSITORY', 'REF')
