@@ -75,11 +75,15 @@ with app.timer('TOTAL'):
 
     while True:
         try:       
-            manifest = manifest.ManifestGenerator()
-            compose(defs, target, manifest)
+            compose(defs, target)
 
             if app.config.get('manifest', True):
-                manifest.dump_to_file()
+                manifest_path = 
+                if os.path.exists(manifest_path):
+                    app.log('MANIFEST', 'Generating system manifest')
+                    # There is no validation of whether the manifest is still
+                    # valid for neither the build artifact, nor the unpacked tree
+                    manifest.dump_to_file(manifest_path)
 
             break
         except KeyboardInterrupt:

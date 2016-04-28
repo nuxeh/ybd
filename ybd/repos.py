@@ -276,3 +276,7 @@ def checkout_submodules(this):
 
         except:
             app.exit(this, "ERROR: git submodules problem", "")
+
+def mirror_exists(repo):
+    return os.path.exists(
+        os.path.join(app.config['gits'], get_repo_name(repo)))
